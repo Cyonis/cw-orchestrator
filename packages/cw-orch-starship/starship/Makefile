@@ -10,7 +10,7 @@ HELM_VERSION = v0.1.38
 ###############################################################################
 
 .PHONY: setup
-setup: setup-deps setup-helm setup-kind
+setup: setup-helm setup-kind
 
 .PHONY: stop
 stop: stop-forward delete

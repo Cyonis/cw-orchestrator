@@ -64,7 +64,7 @@ impl Registry {
         let response = reqwest::get(&url).await?;
         let data: Mnemonics = response.json().await?;
         let first_test_account_mnemonic = data
-            .keys
+            .genesis
             .get(0)
             .ok_or_else(|| StarshipClientError::MissingTestMnemonic(chain_id.to_string()))?
             .mnemonic

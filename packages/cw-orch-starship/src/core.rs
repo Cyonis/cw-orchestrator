@@ -1,5 +1,5 @@
 //! Interactions with docker using bollard
-use ibc_chain_registry::chain::ChainData;
+use ibc_chain_registry::chain::{ChainData, Grpc};
 
 use tokio::process::Command;
 
@@ -57,20 +57,22 @@ impl StarshipClient {
 
         // Fetch all chain data from the chain registry
         let mut chains = registry.chain_data().await?;
+        
         // Set the grpc address for the chains
-
         config.chains.iter().for_each(|chain| {
             let chain_id = chain.name.clone();
             let grpc = chain.ports.grpc.clone();
             chains.iter_mut().for_each(|chain| {
-                if chain.chain_name == chain_id {
-                    chain.apis.grpc = vec![grpc.clone()];
+                if chain.chain_id.as_str() == &chain_id {
+                    eprintln!("{}", chain.chain_id);
+                    chain.apis.grpc = vec![Grpc {
+                        address: format!("{}:{}", url, grpc),
+                        provider: None,
+                    }];
                 }
             })
         });
-        for chain in chains.iter_mut() {
-            chain.apis.grpc = vec![]
-        }
+
         // get all the ibc data:
         Ok(Self {
             url,
