@@ -1,6 +1,10 @@
 pub mod config;
-pub mod error;
+mod error;
 pub mod faucet;
-pub mod starship;
+pub mod registry;
+mod starship;
 
-pub type IcResult<T> = Result<T, error::InterchainError>;
+pub use error::StarshipClientError;
+pub use starship::StarshipClient;
+
+pub type StarshipClientResult<T> = Result<T, error::StarshipClientError>;

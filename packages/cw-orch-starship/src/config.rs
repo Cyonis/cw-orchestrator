@@ -1,46 +1,45 @@
-use ibc_chain_registry::paths::IBCPath;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::collections::HashMap;
 use std::fs;
 
-use crate::error::InterchainError;
-use crate::IcResult;
+use crate::error::StarshipClientError;
+use crate::StarshipClientResult;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Config {
-    chains: Vec<Chain>,
-    relayers: Vec<Relayer>,
-    explorer: Service,
-    registry: Service,
+    pub chains: Vec<Chain>,
+    pub relayers: Vec<Relayer>,
+    pub explorer: Service,
+    pub registry: Service,
 }
 
 impl Config {
     // find a relayer that relays between the two chains
-    pub fn relayer_for(&self, chain_id_a: &str, chain_id_b: &str) -> IcResult<Relayer> {
+    pub fn relayer_for(&self, chain_id_a: &str, chain_id_b: &str) -> StarshipClientResult<Relayer> {
         self.relayers
             .iter()
             .find(|r| r.relays_over(chain_id_a, chain_id_b))
-            .ok_or(InterchainError::HermesNotFound)
+            .ok_or(StarshipClientError::HermesNotFound)
             .cloned()
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct Chain {
-    name: String,
+pub struct Chain {
+    pub name: String,
     #[serde(rename = "type")]
     chain_type: String,
     #[serde(rename = "numValidators")]
     num_validators: u32,
-    ports: Ports,
+    pub ports: Ports,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct Ports {
+pub struct Ports {
     rest: u32,
     rpc: u32,
-    grpc: u32,
+    pub grpc: u32,
     faucet: u32,
 }
 
@@ -65,10 +64,10 @@ impl Relayer {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Service {
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct Service {
     enabled: bool,
-    ports: HashMap<String, u32>,
+    pub ports: HashMap<String, u32>,
 }
 
 // Parse the YAML file into the Config struct.

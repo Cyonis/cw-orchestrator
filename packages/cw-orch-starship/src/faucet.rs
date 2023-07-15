@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{error::InterchainError, IcResult};
+use crate::{error::StarshipClientError, StarshipClientResult};
 
 // Faucet implementation based on: https://github.com/cosmos/cosmjs/tree/main/packages/faucet
 #[derive(Debug, Clone)]
@@ -22,7 +22,7 @@ impl Faucet {
             .get(&format!("http://{}/status", path))
             .send()
             .await
-            .map_err(|e| InterchainError::FaucetError(e.to_string()))
+            .map_err(|e| StarshipClientError::FaucetError(e.to_string()))
             .unwrap();
         Self(path)
     }
@@ -31,7 +31,7 @@ impl Faucet {
         &self,
         address: impl ToString,
         denom: impl ToString,
-    ) -> IcResult<()> {
+    ) -> StarshipClientResult<()> {
         let faucet = &self.0;
         let url = format!("http://{}/{}", faucet, address.to_string());
         let client = reqwest::Client::new();
@@ -43,11 +43,11 @@ impl Faucet {
             })
             .send()
             .await
-            .map_err(|e| InterchainError::FaucetError(e.to_string()))?;
+            .map_err(|e| StarshipClientError::FaucetError(e.to_string()))?;
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(InterchainError::FaucetError(response.text().await?))
+            Err(StarshipClientError::FaucetError(response.text().await?))
         }
     }
 }

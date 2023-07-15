@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum InterchainError {
+pub enum StarshipClientError {
     // #[error("Error interacting with docker {0}")]
     // Docker(#[from] ::bollard::errors::Error),
     #[error(transparent)]
@@ -26,4 +26,7 @@ pub enum InterchainError {
 
     #[error("Configuration already registered for chain {0}")]
     AlreadyRegistered(String),
+
+    #[error("Missing test mnemonic for chain {0}")]
+    MissingTestMnemonic(String),
 }
