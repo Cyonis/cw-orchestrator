@@ -57,7 +57,7 @@ impl StarshipClient {
 
         // Fetch all chain data from the chain registry
         let mut chains = registry.chain_data().await?;
-        
+
         // Set the grpc address for the chains
         config.chains.iter().for_each(|chain| {
             let chain_id = chain.name.clone();

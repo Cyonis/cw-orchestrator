@@ -1,4 +1,3 @@
-
 use cw_orch_daemon::queriers::{DaemonQuerier, Ibc, Node};
 use cw_orch_daemon::GrpcChannel;
 use cw_orch_daemon::TxResultBlockEvent;
@@ -7,7 +6,7 @@ use cw_orch_environment::networks::parse_network;
 
 use crate::interchain_channel::TxId;
 use crate::interchain_channel_builder::InterchainChannelBuilder;
-use crate::{InterchainError, IcResult};
+use crate::{IcResult, InterchainError};
 
 use futures::future::try_join_all;
 use ibc_chain_registry::chain::ChainData;
@@ -17,7 +16,6 @@ use tonic::transport::Channel;
 
 use crate::interchain_env::NetworkId;
 use std::collections::HashMap;
-
 
 /// Structure to hold information about a sent packet
 pub struct IbcPacketInfo {
@@ -203,7 +201,9 @@ impl PacketInspector {
             .channel_from(src_channel)
             .await?;
 
-        Ok(interchain_channel.follow_packet(src_chain, sequence).await?)
+        Ok(interchain_channel
+            .follow_packet(src_chain, sequence)
+            .await?)
     }
 }
 
@@ -257,7 +257,7 @@ async fn find_ibc_packets_sent_in_tx(
         // We log the packets we follow.
         log::info!(
             target: &chain,
-            "IBC packet n° {} : 
+            "IBC packet n° {} :
                 port : {}, 
                 channel: {} 
                 data: {}",

@@ -9,10 +9,10 @@ use ibc_relayer_types::core::ics24_host::identifier::PortId;
 use tokio::time::{sleep, Duration};
 use tonic::transport::Channel;
 
-use cw_orch_daemon::CosmTxResponse;
-use cw_orch_daemon::DaemonError;
 use cw_orch_daemon::queriers::DaemonQuerier;
 use cw_orch_daemon::queriers::Node;
+use cw_orch_daemon::CosmTxResponse;
+use cw_orch_daemon::DaemonError;
 
 use super::interchain_env::NetworkId;
 

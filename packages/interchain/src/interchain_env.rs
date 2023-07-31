@@ -27,7 +27,6 @@ use tokio::runtime::Handle;
 
 use crate::InterchainError;
 
-
 pub type NetworkId = String;
 pub type Mnemonic = String;
 

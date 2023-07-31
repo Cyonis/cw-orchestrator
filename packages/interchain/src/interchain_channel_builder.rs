@@ -1,9 +1,9 @@
 //! Builder for the IntechainChannel object
 
-use cw_orch_daemon::Daemon;
-use cw_orch_daemon::DaemonError;
 use cw_orch_daemon::queriers::DaemonQuerier;
 use cw_orch_daemon::queriers::Ibc;
+use cw_orch_daemon::Daemon;
+use cw_orch_daemon::DaemonError;
 use cw_orch_environment::contract::interface_traits::ContractInstance;
 use cw_orch_starship::StarshipClient;
 
@@ -43,7 +43,6 @@ pub struct InterchainChannelBuilder {
 }
 
 impl InterchainChannelBuilder {
-
     /// Sets the chain_id for the chain A
     pub fn chain_a(&mut self, chain_id: impl Into<NetworkId>) -> &mut Self {
         self.chain_a.chain_id = Some(chain_id.into());
@@ -232,13 +231,15 @@ impl InterchainChannelBuilder {
             .await?;
 
         // Then we actually create a channel between the 2 ports (using the starship interface)
-        starship.create_channel(
-            self.chain_a.chain_id.clone().unwrap().as_str(), 
-            self.chain_b.chain_id.clone().unwrap().as_str(),
-            self.chain_a.port.clone().unwrap().as_str(),
-            self.chain_b.port.clone().unwrap().as_str(),
-            channel_version
-        ).await?;
+        starship
+            .create_channel(
+                self.chain_a.chain_id.clone().unwrap().as_str(),
+                self.chain_b.chain_id.clone().unwrap().as_str(),
+                self.chain_a.port.clone().unwrap().as_str(),
+                self.chain_b.port.clone().unwrap().as_str(),
+                channel_version,
+            )
+            .await?;
 
         // Finally, we get the channel id from the chain creation events
         log::info!("Channel creation message sent to hermes, awaiting for channel creation end");
