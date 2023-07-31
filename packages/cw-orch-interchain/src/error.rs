@@ -1,10 +1,11 @@
+use cw_orch_starship::StarshipClientError;
 use ibc_relayer_types::core::ics24_host::error::ValidationError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum InterchainError {
-    #[error("Error interacting with docker {0}")]
-    Docker(#[from] ::bollard::errors::Error),
+    #[error("Error interacting with Starship {0}")]
+    Docker(#[from] StarshipClientError),
 
     #[error("Error interacting with daemon {0}")]
     Daemon(#[from] crate::daemon::DaemonError),

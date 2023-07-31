@@ -1,10 +1,13 @@
+
 use crate::daemon::queriers::{DaemonQuerier, Ibc, Node};
 use crate::daemon::GrpcChannel;
 use crate::daemon::TxResultBlockEvent;
 use crate::daemon::{CosmTxResponse, DaemonError};
-use crate::interchain::interchain_channel::TxId;
-use crate::interchain::interchain_channel_builder::InterchainChannelBuilder;
 use crate::prelude::networks::parse_network;
+use crate::interchain_channel::TxId;
+use crate::interchain_channel_builder::InterchainChannelBuilder;
+use crate::InterchainError;
+
 use anyhow::Result;
 use futures::future::try_join_all;
 use ibc_chain_registry::chain::ChainData;
@@ -12,13 +15,12 @@ use ibc_relayer_types::core::ics04_channel::packet::Sequence;
 use ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 use tonic::transport::Channel;
 
-use crate::interchain::interchain_env::NetworkId;
+use crate::interchain_env::NetworkId;
 use std::collections::HashMap;
 
-use super::error::InterchainError;
 
 /// Structure to hold information about a sent packet
-pub struct IbcPackteInfo {
+pub struct IbcPacketInfo {
     src_port: PortId,
     src_channel: ChannelId,
     sequence: Sequence,

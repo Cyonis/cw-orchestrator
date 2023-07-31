@@ -3,12 +3,13 @@
 use crate::daemon::networks::parse_network;
 use crate::daemon::Daemon;
 use crate::daemon::DaemonError;
-use crate::interchain::docker::DockerHelper;
-use crate::interchain::packet_inspector::PacketInspector;
 use crate::interface_traits::ContractInstance;
+use crate::state::ChainState;
+
+use crate::packet_inspector::PacketInspector;
 use ibc_relayer_types::core::ics24_host::identifier::PortId;
 
-use crate::interchain::IcResult;
+use crate::IcResult;
 use ibc_chain_registry::chain::{ChainData, Grpc};
 use ibc_relayer_types::core::ics24_host::identifier::ChainId;
 use log::LevelFilter;
@@ -24,9 +25,8 @@ use std::default::Default;
 use std::path::PathBuf;
 use tokio::runtime::Handle;
 
-use super::error::InterchainError;
+use crate::InterchainError;
 
-use crate::state::ChainState;
 
 pub type NetworkId = String;
 pub type Mnemonic = String;

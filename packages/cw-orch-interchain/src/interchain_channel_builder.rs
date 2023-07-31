@@ -2,25 +2,23 @@
 
 use crate::daemon::Daemon;
 use crate::daemon::DaemonError;
-use crate::interchain::hermes::Hermes;
-use crate::interchain::interchain_env::NetworkId;
-
-use crate::interchain::packet_inspector::PacketInspector;
+use crate::daemon::queriers::DaemonQuerier;
+use crate::daemon::queriers::Ibc;
 use crate::interface_traits::ContractInstance;
 use crate::state::ChainState;
 
-use crate::daemon::queriers::DaemonQuerier;
-use crate::daemon::queriers::Ibc;
-use crate::interchain::docker::DockerHelper;
-use crate::interchain::interchain_channel::InterchainChannel;
-use crate::interchain::IcResult;
+use crate::interchain_env::NetworkId;
+use crate::packet_inspector::PacketInspector;
+
+use crate::interchain_channel::InterchainChannel;
+use crate::IcResult;
 
 use ibc_relayer_types::core::ics24_host::identifier::ChannelId;
 use ibc_relayer_types::core::ics24_host::identifier::PortId;
 use tonic::transport::Channel;
 
-use super::interchain_channel::IbcPort;
-use super::interchain_env::contract_port;
+use crate::interchain_channel::IbcPort;
+use crate::interchain_env::contract_port;
 
 #[derive(Default, Debug)]
 struct ChainChannelBuilder {
