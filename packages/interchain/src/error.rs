@@ -8,7 +8,7 @@ pub enum InterchainError {
     Docker(#[from] StarshipClientError),
 
     #[error("Error interacting with daemon {0}")]
-    Daemon(#[from] crate::daemon::DaemonError),
+    Daemon(#[from] cw_orch_daemon::DaemonError),
 
     #[error("Error validating IBC structures {0}")]
     ValidationError(#[from] ValidationError),

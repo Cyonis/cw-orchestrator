@@ -1,11 +1,11 @@
 // We use that here because the Diff attribute on CwIbcContractState pops errors with this macro
 #![allow(missing_docs)]
 
-use crate::daemon::queriers::{DaemonQuerier, Ibc, Node};
+use cw_orch_daemon::queriers::{DaemonQuerier, Ibc, Node};
 use cosmrs::proto::ibc::core::channel::v1::State;
-use diff::Diff;
 use futures_util::future::join_all;
 use log::*;
+use diff::Diff;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -15,7 +15,7 @@ use tonic::{async_trait, transport::Channel};
 
 use self::logged_state::LoggedState;
 
-use super::channel::ChannelAccess;
+use cw_orch_daemon::ChannelAccess;
 
 /// Configuration object for tracking an IBC port
 #[derive(derive_builder::Builder)]
@@ -99,6 +99,7 @@ mod logged_state {
         }
     }
 }
+
 
 #[derive(Debug, PartialEq, Default, Diff, Clone)]
 /// Store the current state of a contract's IBC connection.

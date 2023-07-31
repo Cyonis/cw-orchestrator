@@ -1,14 +1,14 @@
 
-use crate::daemon::queriers::{DaemonQuerier, Ibc, Node};
-use crate::daemon::GrpcChannel;
-use crate::daemon::TxResultBlockEvent;
-use crate::daemon::{CosmTxResponse, DaemonError};
-use crate::prelude::networks::parse_network;
+use cw_orch_daemon::queriers::{DaemonQuerier, Ibc, Node};
+use cw_orch_daemon::GrpcChannel;
+use cw_orch_daemon::TxResultBlockEvent;
+use cw_orch_daemon::{CosmTxResponse, DaemonError};
+use cw_orch_environment::networks::parse_network;
+
 use crate::interchain_channel::TxId;
 use crate::interchain_channel_builder::InterchainChannelBuilder;
-use crate::InterchainError;
+use crate::{InterchainError, IcResult};
 
-use anyhow::Result;
 use futures::future::try_join_all;
 use ibc_chain_registry::chain::ChainData;
 use ibc_relayer_types::core::ics04_channel::packet::Sequence;
@@ -55,7 +55,7 @@ impl PacketInspector {
     /// More precisely, it will need to get a gRPC channel from a `chain_id`.
     /// This struct will use the `crate::prelude::networks::parse_network` function by default to do so.
     /// To override this behavior for specific chains (for example for local testing), you can specify a channel for a specific chain_id
-    pub async fn new(custom_chains: &Vec<ChainData>) -> Result<Self> {
+    pub async fn new(custom_chains: &Vec<ChainData>) -> IcResult<Self> {
         let mut env = PacketInspector::default();
 
         for chain in custom_chains {
@@ -71,7 +71,7 @@ impl PacketInspector {
     /// More precisely, it will need to get a gRPC channel from a `chain_id`.
     /// This struct will use the `crate::prelude::networks::parse_network` function by default to do so.
     /// To override this behavior for specific chains (for example for local testing), you can specify a channel for a specific chain_id
-    pub fn from_channels(custom_chains: &Vec<(NetworkId, Channel)>) -> Result<Self> {
+    pub fn from_channels(custom_chains: &Vec<(NetworkId, Channel)>) -> IcResult<Self> {
         let mut env = PacketInspector::default();
 
         for (chain_id, grpc_channel) in custom_chains {
@@ -109,7 +109,7 @@ impl PacketInspector {
         &self,
         chain1: NetworkId,
         packet_send_tx_hash: String,
-    ) -> Result<()> {
+    ) -> IcResult<()> {
         // 1. Getting IBC related events for the current tx + finding all IBC packets sent out in the transaction
         let grpc_channel1 = self.get_grpc_channel(&chain1).await;
 
@@ -189,7 +189,7 @@ impl PacketInspector {
         src_channel: ChannelId,
         dst_chain: NetworkId,
         sequence: Sequence,
-    ) -> Result<Vec<TxId>, DaemonError> {
+    ) -> IcResult<Vec<TxId>> {
         let dst_grpc_channel = self.get_grpc_channel(&dst_chain).await;
 
         // That's all we need to generate an InterchainChannel object.
@@ -203,7 +203,7 @@ impl PacketInspector {
             .channel_from(src_channel)
             .await?;
 
-        interchain_channel.follow_packet(src_chain, sequence).await
+        Ok(interchain_channel.follow_packet(src_chain, sequence).await?)
     }
 }
 
@@ -218,7 +218,7 @@ async fn find_ibc_packets_sent_in_tx(
     chain: NetworkId,
     grpc_channel: Channel,
     tx: CosmTxResponse,
-) -> Result<Vec<IbcPackteInfo>, InterchainError> {
+) -> IcResult<Vec<IbcPacketInfo>> {
     let send_packet_events = tx.get_events("send_packet");
     if send_packet_events.is_empty() {
         return Ok(vec![]);
@@ -247,7 +247,7 @@ async fn find_ibc_packets_sent_in_tx(
     let mut ibc_packets = vec![];
     for i in 0..src_ports.len() {
         // We create the ibcPacketInfo struct
-        ibc_packets.push(IbcPackteInfo {
+        ibc_packets.push(IbcPacketInfo {
             src_port: src_ports[i].parse()?,
             src_channel: src_channels[i].parse()?,
             sequence: sequences[i].parse()?,

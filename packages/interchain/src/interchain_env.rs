@@ -1,10 +1,10 @@
 //! Interactions with docker using bollard
 
-use crate::daemon::networks::parse_network;
-use crate::daemon::Daemon;
-use crate::daemon::DaemonError;
-use crate::interface_traits::ContractInstance;
-use crate::state::ChainState;
+use cw_orch_daemon::networks::parse_network;
+use cw_orch_daemon::Daemon;
+use cw_orch_daemon::DaemonError;
+use cw_orch_environment::contract::interface_traits::ContractInstance;
+use cw_orch_environment::environment::ChainState;
 
 use crate::packet_inspector::PacketInspector;
 use ibc_relayer_types::core::ics24_host::identifier::PortId;
@@ -146,7 +146,7 @@ impl InterchainEnv {
         self.add_chain_config(
             daemons
                 .iter()
-                .map(|d| d.state().chain_data.clone())
+                .map(|d| d.state().0.chain_data.clone())
                 .collect(),
         )?;
         // Then we add the daemons
@@ -177,32 +177,6 @@ impl InterchainEnv {
             .ok_or(InterchainError::ChainConfigNotFound(chain_id.to_string()))
     }
 
-    /// Get the gRPC ports for the local daemons and set them in the `ChainData` objects.
-    pub async fn configure_networks(networks: &mut [ChainData]) -> IcResult<()> {
-        let docker_helper = DockerHelper::new().await?;
-
-        // use chain data network name as to filter container ids
-        let containers_grpc_port = docker_helper.grpc_ports().await?;
-
-        // update network with correct grpc port
-        networks.iter_mut().for_each(|network| {
-            for container in &containers_grpc_port {
-                if container.0.contains(&network.chain_name) {
-                    network.apis.grpc = vec![Grpc {
-                        address: format!("http://0.0.0.0:{}", container.1),
-                        ..Default::default()
-                    }];
-                    log::info!(
-                        "Connected to chain {} on port {}",
-                        network.chain_name,
-                        container.1
-                    );
-                }
-            }
-        });
-        Ok(())
-    }
-
     /// Blocks until all the IBC packets sent during the transaction on chain `chain_id` with transaction hash `packet_send_tx_hash` have completed their cycle
     /// (Packet Sent, Packet Received, Packet Acknowledgment)
     /// This also follows additional packets sent out in the resulting transactions
@@ -211,7 +185,7 @@ impl InterchainEnv {
         &self,
         chain_id: NetworkId,
         packet_send_tx_hash: String,
-    ) -> Result<(), DaemonError> {
+    ) -> IcResult<()> {
         // We crate an interchain env object that is safe to send between threads
         let interchain_env =
             PacketInspector::new(&self.chain_config.values().cloned().collect()).await?;

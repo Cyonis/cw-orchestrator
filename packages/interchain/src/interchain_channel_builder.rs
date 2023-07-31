@@ -1,11 +1,11 @@
 //! Builder for the IntechainChannel object
 
-use crate::daemon::Daemon;
-use crate::daemon::DaemonError;
-use crate::daemon::queriers::DaemonQuerier;
-use crate::daemon::queriers::Ibc;
-use crate::interface_traits::ContractInstance;
-use crate::state::ChainState;
+use cw_orch_daemon::Daemon;
+use cw_orch_daemon::DaemonError;
+use cw_orch_daemon::queriers::DaemonQuerier;
+use cw_orch_daemon::queriers::Ibc;
+use cw_orch_environment::contract::interface_traits::ContractInstance;
+use cw_orch_starship::StarshipClient;
 
 use crate::interchain_env::NetworkId;
 use crate::packet_inspector::PacketInspector;
@@ -19,6 +19,8 @@ use tonic::transport::Channel;
 
 use crate::interchain_channel::IbcPort;
 use crate::interchain_env::contract_port;
+
+use cw_orch_environment::environment::ChainState;
 
 #[derive(Default, Debug)]
 struct ChainChannelBuilder {
@@ -41,10 +43,6 @@ pub struct InterchainChannelBuilder {
 }
 
 impl InterchainChannelBuilder {
-    async fn get_hermes() -> IcResult<Hermes> {
-        let docker_helper = DockerHelper::new().await?;
-        docker_helper.get_hermes()
-    }
 
     /// Sets the chain_id for the chain A
     pub fn chain_a(&mut self, chain_id: impl Into<NetworkId>) -> &mut Self {
@@ -106,6 +104,7 @@ impl InterchainChannelBuilder {
             contract_a
                 .get_chain()
                 .state()
+                .0
                 .chain_data
                 .chain_id
                 .to_string(),
@@ -121,6 +120,7 @@ impl InterchainChannelBuilder {
             contract_b
                 .get_chain()
                 .state()
+                .0
                 .chain_data
                 .chain_id
                 .to_string(),
@@ -189,8 +189,9 @@ impl InterchainChannelBuilder {
     /// 2. ALl IBC packets sent out during the channel creation procedure have been resolved (See `PacketInspector::await_ibc_execution` for more details)
     pub async fn create_channel(
         &self,
+        starship: &StarshipClient,
         channel_version: &str,
-    ) -> Result<InterchainChannel, DaemonError> {
+    ) -> IcResult<InterchainChannel> {
         let origin_chain_id = self.chain_a.chain_id.clone().unwrap();
 
         // We need to construct the channels for chain a and chain b
@@ -230,17 +231,14 @@ impl InterchainChannelBuilder {
             .get_last_channel_creation_hash(origin_chain_id.clone())
             .await?;
 
-        // Then we actually create a channel between the 2 ports
-        Self::get_hermes()
-            .await?
-            .create_channel_raw(
-                &connection,
-                channel_version,
-                &origin_chain_id,
-                self.chain_a.port.clone().unwrap(),
-                self.chain_b.port.clone().unwrap(),
-            )
-            .await;
+        // Then we actually create a channel between the 2 ports (using the starship interface)
+        starship.create_channel(
+            self.chain_a.chain_id.clone().unwrap().as_str(), 
+            self.chain_b.chain_id.clone().unwrap().as_str(),
+            self.chain_a.port.clone().unwrap().as_str(),
+            self.chain_b.port.clone().unwrap().as_str(),
+            channel_version
+        ).await?;
 
         // Finally, we get the channel id from the chain creation events
         log::info!("Channel creation message sent to hermes, awaiting for channel creation end");
