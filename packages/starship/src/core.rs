@@ -16,12 +16,6 @@ use tokio::runtime::Handle;
 // const IBC_REGISTRY: &str = "http://localhost:8081/ibc";
 const LOCALHOST: &str = "http://localhost";
 
-pub type NetworkId = String;
-pub type Mnemonic = String;
-pub type GRpcUrl = String;
-
-static STARSHIP_CONFIG: &str = "starship.toml";
-
 /// Represents a set of locally running blockchain nodes and a Hermes relayer.
 #[derive(Debug, Clone, Default)]
 pub struct StarshipClient {
@@ -61,9 +55,9 @@ impl StarshipClient {
         // Set the grpc address for the chains
         config.chains.iter().for_each(|chain| {
             let chain_id = chain.name.clone();
-            let grpc = chain.ports.grpc.clone();
+            let grpc = chain.ports.grpc;
             chains.iter_mut().for_each(|chain| {
-                if chain.chain_id.as_str() == &chain_id {
+                if chain.chain_id.as_str() == chain_id {
                     eprintln!("{}", chain.chain_id);
                     chain.apis.grpc = vec![Grpc {
                         address: format!("{}:{}", url, grpc),

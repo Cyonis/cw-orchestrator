@@ -75,8 +75,10 @@ impl Registry {
 
 #[derive(Deserialize, Debug)]
 struct Record {
+    #[allow(dead_code)]
     name: String,
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     record_type: String,
     mnemonic: String,
 }
@@ -84,7 +86,10 @@ struct Record {
 #[derive(Deserialize, Debug)]
 struct Mnemonics {
     genesis: Vec<Record>,
+    #[allow(dead_code)]
     validators: Vec<Record>,
+    #[allow(dead_code)]
     keys: Vec<Record>,
+    #[allow(dead_code)]
     relayers: Vec<Record>,
 }

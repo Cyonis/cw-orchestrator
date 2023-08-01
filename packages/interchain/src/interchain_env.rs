@@ -9,7 +9,7 @@ use crate::packet_inspector::PacketInspector;
 use ibc_relayer_types::core::ics24_host::identifier::PortId;
 
 use crate::IcResult;
-use ibc_chain_registry::chain::{ChainData, Grpc};
+use ibc_chain_registry::chain::ChainData;
 use ibc_relayer_types::core::ics24_host::identifier::ChainId;
 use log::LevelFilter;
 use log4rs::append::file::FileAppender;
@@ -104,14 +104,14 @@ impl InterchainEnv {
         let chain_data_configs: Vec<ChainData> =
             chain_configs.into_iter().map(|c| c.into()).collect();
         // We create logs for the new chains that were just added
-        self.log.as_mut().map(|log| {
+        if let Some(log) = self.log.as_mut() {
             log.add_chains(
                 &chain_data_configs
                     .iter()
                     .map(|chain| chain.chain_id.to_string())
                     .collect(),
             )
-        });
+        }
 
         // We can't update the chain config while running. It's supposed to be created at the beginning of execution
         for chain_data in chain_data_configs {
