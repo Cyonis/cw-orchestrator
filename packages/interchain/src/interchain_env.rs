@@ -2,7 +2,6 @@
 
 use cw_orch_daemon::networks::parse_network;
 use cw_orch_daemon::Daemon;
-use cw_orch_daemon::DaemonError;
 use cw_orch_environment::contract::interface_traits::ContractInstance;
 use cw_orch_environment::environment::ChainState;
 
@@ -36,8 +35,7 @@ pub struct InterchainEnv {
     chain_config: HashMap<NetworkId, ChainData>,
     daemons: HashMap<NetworkId, Daemon>,
 
-    log: InterchainLog,
-    runtime: Handle,
+    log: Option<InterchainLog>,
 }
 
 impl InterchainEnv {
@@ -61,13 +59,13 @@ impl InterchainEnv {
             chain_config: HashMap::new(),
             daemons: HashMap::new(),
 
-            log: InterchainLog::new(),
-            runtime: runtime.clone(),
+            log: None,
         };
         // First we register the chain_data
         obj.add_chain_config(chains)?;
         // Then the mnemonics
         obj.add_mnemonics(
+            runtime,
             mnemonics
                 .into_iter()
                 .filter(|(_, mn)| mn.is_some())
@@ -78,6 +76,26 @@ impl InterchainEnv {
         Ok(obj)
     }
 
+    pub fn from_daemons(daemons: Vec<Daemon>) -> Self {
+        Self {
+            chain_config: daemons
+                .iter()
+                .map(|d| {
+                    let chain_data = d.state().0.chain_data.clone();
+                    (chain_data.chain_id.to_string(), chain_data)
+                })
+                .collect(),
+            daemons: daemons
+                .iter()
+                .map(|d| {
+                    let chain_data = d.state().0.chain_data.clone();
+                    (chain_data.chain_id.to_string(), d.clone())
+                })
+                .collect(),
+            log: None,
+        }
+    }
+
     /// Registers a custom chain to the current interchain environment
     pub fn add_chain_config<T>(&mut self, chain_configs: Vec<T>) -> IcResult<()>
     where
@@ -86,12 +104,14 @@ impl InterchainEnv {
         let chain_data_configs: Vec<ChainData> =
             chain_configs.into_iter().map(|c| c.into()).collect();
         // We create logs for the new chains that were just added
-        self.log.add_chains(
-            &chain_data_configs
-                .iter()
-                .map(|chain| chain.chain_id.to_string())
-                .collect(),
-        );
+        self.log.as_mut().map(|log| {
+            log.add_chains(
+                &chain_data_configs
+                    .iter()
+                    .map(|chain| chain.chain_id.to_string())
+                    .collect(),
+            )
+        });
 
         // We can't update the chain config while running. It's supposed to be created at the beginning of execution
         for chain_data in chain_data_configs {
@@ -109,6 +129,7 @@ impl InterchainEnv {
     /// TODO allow registering mnemonics for chains accessible using the parse_network function
     pub fn add_mnemonics(
         &mut self,
+        runtime: &Handle,
         mnemonics: Vec<(impl ToString, impl ToString)>,
     ) -> IcResult<&mut Self> {
         // We can't update the chain config while running. It's supposed to be created at the beginning of execution
@@ -118,18 +139,23 @@ impl InterchainEnv {
                 return Err(InterchainError::AlreadyRegistered(chain_id.to_string()));
             }
             let chain_data = self.chain_data(chain_id)?;
-            self.build_daemon(chain_data, mn)?;
+            self.build_daemon(runtime, chain_data, mn)?;
         }
 
         Ok(self)
     }
 
     /// Build a daemon from chain data and mnemonic and add it to the current configuration
-    pub fn build_daemon(&mut self, chain_data: ChainData, mnemonic: impl ToString) -> IcResult<()> {
+    fn build_daemon(
+        &mut self,
+        runtime: &Handle,
+        chain_data: ChainData,
+        mnemonic: impl ToString,
+    ) -> IcResult<()> {
         let daemon = Daemon::builder()
             .chain(chain_data.clone())
             .deployment_id("interchain") // TODO, how do we choose that
-            .handle(&self.runtime)
+            .handle(runtime)
             .mnemonic(mnemonic)
             .build()
             .unwrap();
@@ -271,6 +297,24 @@ impl InterchainLog {
             config_builder = self.add_logger(config_builder, chain_id.clone());
             // log startup to each daemon log
             log::info!("Starting specific log: {chain_id}");
+
+            /*
+                // We also start logging IBC state for a specific port ?
+                // TODO
+
+                // Track IBC on JUNO
+                let juno_channel = juno.channel();
+                let tracker = IbcTrackerConfigBuilder::default()
+                    .ibc_state(CwIbcContractState::new(
+                        interchain_channel.get_connection(),
+                        contract_port(&host),
+                    ))
+                    .build()?;
+                // spawn juno logging on a different thread.
+                rt.spawn(async move {
+                    juno_channel.cron_log(tracker).await.unwrap();
+                });
+            */
         }
         self.handle
             .set_config(InterchainLog::build_logger(config_builder));

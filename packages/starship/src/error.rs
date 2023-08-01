@@ -1,3 +1,4 @@
+use cw_orch_environment::CwEnvError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -29,4 +30,10 @@ pub enum StarshipClientError {
 
     #[error("Missing test mnemonic for chain {0}")]
     MissingTestMnemonic(String),
+}
+
+impl From<StarshipClientError> for CwEnvError {
+    fn from(val: StarshipClientError) -> Self {
+        CwEnvError::AnyError(val.into())
+    }
 }

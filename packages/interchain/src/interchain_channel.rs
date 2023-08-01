@@ -283,8 +283,8 @@ impl InterchainChannel {
                         }
                     }
                     log::debug!("No new TX by events found");
-                    log::debug!("Waiting 10s");
-                    sleep(Duration::from_secs(10)).await;
+                    log::debug!("Waiting 20s");
+                    sleep(Duration::from_secs(20)).await;
                 }
                 Err(e) => {
                     log::debug!("{:?}", e);

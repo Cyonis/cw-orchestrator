@@ -1,7 +1,7 @@
 use cw_orch_daemon::queriers::{DaemonQuerier, Ibc, Node};
+use cw_orch_daemon::CosmTxResponse;
 use cw_orch_daemon::GrpcChannel;
 use cw_orch_daemon::TxResultBlockEvent;
-use cw_orch_daemon::{CosmTxResponse, DaemonError};
 use cw_orch_environment::networks::parse_network;
 
 use crate::interchain_channel::TxId;

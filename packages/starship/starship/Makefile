@@ -65,6 +65,10 @@ KIND_CLUSTER=starship
 setup-kind:
 	kind create cluster --name $(KIND_CLUSTER)
 
+.PHONY: setup-kind
+watch-pods:
+	watch kubectl get pods
+
 .PHONY: clean-kind
 clean-kind:
 	kind delete cluster --name $(KIND_CLUSTER)
