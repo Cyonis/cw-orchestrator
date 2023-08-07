@@ -45,8 +45,8 @@ pub struct IbcPort {
 #[derive(Debug)]
 pub struct InterchainChannel {
     connection_id: String,
-    port_a: IbcPort,
-    port_b: IbcPort,
+    pub port_a: IbcPort,
+    pub port_b: IbcPort,
 }
 
 // TODO some of those queries may be implemented (or are already implemented) in the IBC querier file ?

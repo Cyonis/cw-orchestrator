@@ -1,5 +1,7 @@
 //! Builder for the IntechainChannel object
 
+use std::str::FromStr;
+
 use cw_orch_daemon::queriers::DaemonQuerier;
 use cw_orch_daemon::queriers::Ibc;
 use cw_orch_daemon::Daemon;
@@ -200,7 +202,7 @@ impl InterchainChannelBuilder {
         };
 
         // Then we construct the InterchainChannel object
-        let interchain = InterchainChannel::new(
+        let mut interchain = InterchainChannel::new(
             connection.clone(),
             IbcPort {
                 chain: grpc_channel_a.clone(),
@@ -264,6 +266,9 @@ impl InterchainChannelBuilder {
             (self.chain_a.chain_id.clone().unwrap(), grpc_channel_a),
             (self.chain_b.chain_id.clone().unwrap(), grpc_channel_b),
         ])?;
+
+        interchain.port_a.channel = Some(ChannelId::from_str(src_channel_id.as_str())?);
+        interchain.port_b.channel = Some(ChannelId::from_str(dst_channel_id.as_str())?);
 
         packet_inspector
             .await_ibc_execution(
