@@ -356,23 +356,28 @@ impl InterchainChannel {
         let parsed_ack: Result<AckResponse, serde_json::Error> =
             serde_json::from_str(&acknowledgment);
 
-        let decoded_ack: String = if let Ok(ack_result) = parsed_ack {
-            match ack_result {
-                AckResponse::Result(b) => {
-                    match std::str::from_utf8(
-                        &general_purpose::STANDARD
-                            .decode(b.clone())
-                            .unwrap_or(vec![]),
-                    ) {
-                        Ok(d) => format!("Decoded successful ack : {}", d),
-                        Err(_) => format!("Couldn't decode following successful ack : {}", b),
+        let decoded_ack: String =
+            if let Ok(ack_result) = parsed_ack {
+                match ack_result {
+                    AckResponse::Result(b) => {
+                        match std::str::from_utf8(
+                            &general_purpose::STANDARD
+                                .decode(b.clone())
+                                .unwrap_or(vec![]),
+                        ) {
+                            Ok(d) => format!("Decoded successful ack : {}", d),
+                            Err(_) => format!("Couldn't decode following successful ack : {}", b),
+                        }
                     }
+
+                    AckResponse::Error(e) => return Err(DaemonError::IbcError(format!(
+                        "Error when receiving the acknoldgment for packet {} in channel {:?} : {}",
+                        sequence, self, e
+                    ))),
                 }
-                AckResponse::Error(e) => format!("Ack error : {}", e),
-            }
-        } else {
-            acknowledgment.clone()
-        };
+            } else {
+                acknowledgment.clone()
+            };
 
         log::info!(
             target: &dst_port.chain_id,
