@@ -92,40 +92,31 @@ impl InterchainChannelBuilder {
         contract_a: &dyn ContractInstance<Daemon>,
         contract_b: &dyn ContractInstance<Daemon>,
     ) -> &mut Self {
-        self.from_contract_a(contract_a);
-        self.from_contract_b(contract_b)
+        self.port_a(contract_port(contract_a));
+        self.port_b(contract_port(contract_b));
+        self.from_daemon_a(contract_a.get_chain());
+        self.from_daemon_b(contract_b.get_chain())
+    }
+
+    /// Sets up the builder object from 2 contracts
+    /// This simplifies the construction of the builder object when following a channel between 2 contracts
+    pub fn from_daemons(&mut self, daemon_a: &Daemon, daemon_b: &Daemon) -> &mut Self {
+        self.from_daemon_a(daemon_a);
+        self.from_daemon_b(daemon_b)
     }
 
     /// Sets up the builder object from a contract on chainn A
     /// This simplifies the construction of the builder object when the port on chain A is associated with a contract
-    pub fn from_contract_a(&mut self, contract_a: &dyn ContractInstance<Daemon>) -> &mut Self {
-        self.chain_a(
-            contract_a
-                .get_chain()
-                .state()
-                .0
-                .chain_data
-                .chain_id
-                .to_string(),
-        );
-        self.port_a(contract_port(contract_a));
-        self.grpc_channel_a(contract_a.get_chain().channel())
+    pub fn from_daemon_a(&mut self, chain_a: &Daemon) -> &mut Self {
+        self.chain_a(chain_a.state().0.chain_data.chain_id.to_string());
+        self.grpc_channel_a(chain_a.channel())
     }
 
     /// Sets up the builder object from a contract on chain B
     /// This simplifies the construction of the builder object when the port on chain B is associated with a contract
-    pub fn from_contract_b(&mut self, contract_b: &dyn ContractInstance<Daemon>) -> &mut Self {
-        self.chain_b(
-            contract_b
-                .get_chain()
-                .state()
-                .0
-                .chain_data
-                .chain_id
-                .to_string(),
-        );
-        self.port_b(contract_port(contract_b));
-        self.grpc_channel_b(contract_b.get_chain().channel())
+    pub fn from_daemon_b(&mut self, chain_b: &Daemon) -> &mut Self {
+        self.chain_b(chain_b.state().0.chain_data.chain_id.to_string());
+        self.grpc_channel_b(chain_b.channel())
     }
 
     /// Creates an InterchainChannel object from an existing channel between 2 ports.
