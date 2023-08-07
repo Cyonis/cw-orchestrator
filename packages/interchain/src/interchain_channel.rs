@@ -14,6 +14,9 @@ use cw_orch_daemon::queriers::Node;
 use cw_orch_daemon::CosmTxResponse;
 use cw_orch_daemon::DaemonError;
 
+use crate::packet_inspector::PacketInspector;
+use crate::IcResult;
+
 use super::interchain_env::NetworkId;
 
 // type is from cosmos_sdk_proto::ibc::core::channel::v1::acknowledgement::Response
@@ -415,5 +418,28 @@ impl InterchainChannel {
                 tx_hash: ack_tx.txhash,
             },
         ])
+    }
+
+    /// Blocks until all the IBC packets sent during the transaction on chain `chain_id` with transaction hash `packet_send_tx_hash` have completed their cycle
+    /// (Packet Sent, Packet Received, Packet Acknowledgment)
+    /// This also follows additional packets sent out in the resulting transactions
+    /// See the documentation for `PacketInspector::await_ibc_execution` for more details about the awaiting procedure
+    pub async fn await_ibc_execution(
+        &self,
+        chain_id: NetworkId,
+        packet_send_tx_hash: String,
+    ) -> IcResult<()> {
+        // We crate an interchain env object that is safe to send between threads
+        let interchain_env = PacketInspector::from_channels(&vec![
+            (self.port_a.chain_id.clone(), self.port_a.chain.clone()),
+            (self.port_b.chain_id.clone(), self.port_b.chain.clone()),
+        ])?;
+
+        // We follow the trail
+        interchain_env
+            .await_ibc_execution(chain_id, packet_send_tx_hash)
+            .await?;
+
+        Ok(())
     }
 }
